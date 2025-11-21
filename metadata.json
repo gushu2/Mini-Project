@@ -1,0 +1,8 @@
+{
+  "name": "SerenitySense",
+  "description": "A biofeedback stress relief application that visualizes sensor data (simulated or via Web Serial) and provides AI-powered relaxation guidance.",
+  "requestFramePermissions": [
+    "microphone",
+    "serial"
+  ]
+}
