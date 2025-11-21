@@ -209,12 +209,20 @@ const App = () => {
 
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+  const notificationSent = useRef(false);
 
   const classifyStress = (currentBpm, currentHrv) => {
     if (currentBpm > 100) return 'High';
     if (currentBpm > 80) return 'Medium';
     return 'Low';
   };
+
+  // -- Effect: Request Notifications Permission on mount --
+  useEffect(() => {
+    if ("Notification" in window) {
+      Notification.requestPermission();
+    }
+  }, []);
 
   // -- Effect: Chart Initialization --
   useEffect(() => {
@@ -394,9 +402,21 @@ const App = () => {
     }, 600);
   };
 
-  // Automatic Stress Nudge
+  // Automatic Stress Nudge & Mobile Notification
   useEffect(() => {
     if (stressLevel === 'High' && isConnected) {
+       // 1. Send Notification (Mobile/Desktop)
+       if (!notificationSent.current && "Notification" in window && Notification.permission === "granted") {
+           new Notification("High Stress Detected", {
+               body: `BPM is ${bpm}. Take a moment to breathe.`,
+               icon: "https://cdn-icons-png.flaticon.com/512/2585/2585592.png"
+           });
+           notificationSent.current = true;
+           // Reset notification trigger after 1 min to avoid spam
+           setTimeout(() => notificationSent.current = false, 60000);
+       }
+
+       // 2. Chat Nudge
        const timer = setTimeout(() => {
            setMessages(prev => {
                if (prev.length > 0 && prev[prev.length-1].text.includes("high stress")) return prev;
@@ -405,7 +425,7 @@ const App = () => {
        }, 5000);
        return () => clearTimeout(timer);
     }
-  }, [stressLevel, isConnected]);
+  }, [stressLevel, isConnected, bpm]);
 
   return (
     <div className="min-h-screen bg-neuro-50 font-sans text-slate-800 pb-12">
